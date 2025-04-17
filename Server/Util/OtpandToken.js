@@ -1,14 +1,19 @@
 require("dotenv").config();
 const jwt = require('jsonwebtoken');
-let CreateOTPandToken = (Userdata) => {
-    //  Create OTP
+
+let CreateOTPandToken = (Userdata, Privatekey, ExprieTime) => {
+    // Create OTP
     let OTP = Math.floor(100000 + Math.random() * 900000);
 
+    // Update Email in Userdata if it is passed
+    if (Userdata.Email) {
+        Userdata.Email = Userdata.Email;
+    }
+    console.log(Userdata);
     // Create Token
-    let Token = jwt.sign({ Userdata, OTP }, process.env.Token_privateKey, { expiresIn: '1h' });
+    let Token = jwt.sign({ Userdata, OTP }, Privatekey, { expiresIn: ExprieTime });
 
     return { OTP, Token };
-
 }
 
-module.exports = CreateOTPandToken
+module.exports = CreateOTPandToken;

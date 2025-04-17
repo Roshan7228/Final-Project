@@ -5,6 +5,7 @@ let ejs = require('ejs');
 const jwt = require('jsonwebtoken');
 require("dotenv").config();
 const bcrypt = require('bcrypt');
+const Userroutes = require("../Routes/User.routes");
 
 const UserController = {
     signup: async (request, response) => {
@@ -26,7 +27,7 @@ const UserController = {
                     message: "User all Rady Register!"
                 })
             }
-            let UserResult = await CreateOTPandToken({ ...request.body });
+            let UserResult = await CreateOTPandToken({ ...request.body }, process.env.Token_privateKey, "5m");
 
             let MainHTMLTemplate = await ejs.renderFile(__dirname + "/../views/email.ejs", { OTP: UserResult.OTP, Username });
 
@@ -83,40 +84,40 @@ const UserController = {
         }
     },
     signin: async (request, response) => {
-        let { Email, Password } = request.body;
-        if (!(Email, Password)) {
+        if (!request.body.Password || !request.body.Email) {
             return response.status(400).json({
                 message: "Please fill the all Feilds"
             })
         }
         try {
-            let isExist = await UserModel.findOne({ Email })
+            let isExist = await UserModel.findOne({ Email: request.body.Email })
             if (!isExist) {
                 return response.status(400).json({
                     message: "User does not Account"
                 })
             }
-            let validPassword = await bcrypt.compare(Password, isExist.Password);
+            let validPassword = await bcrypt.compare(request.body.Password, isExist.Password);
             if (!validPassword) {
                 return response.status(400).json({
                     message: "Invaild Password."
                 })
             }
-            response.status(200).json({
+
+            let { Password, ...rest } = isExist._doc;
+            const { Token } = CreateOTPandToken({ ...rest }, process.env.User_Token_privateKey, "7d");
+            if (!Token) {
+                return response.status(400).json({
+                    message: "Invalid Token"
+                })
+            }
+            response.cookie("Access_Token", Token).status(200).json({
                 message: "Login SuccessFull."
             })
-
-
-
         } catch (error) {
             return response.status(400).json({
                 message: error.message
             })
         }
-
-
-
-
     },
     ForgetPasswordEmailVerify: async (request, response) => {
         let { Email } = request.body;
@@ -145,10 +146,6 @@ const UserController = {
                 message: error.message
             })
         }
-
-
-
-
     },
     VerifyResetOTP: async (request, response) => {
         let { otp } = request.body;
@@ -209,8 +206,122 @@ const UserController = {
                 message: error.message
             })
         }
+    },
+    GetUserinfo: async (request, response) => {
+        if (!request.params.id) {
+            return response.status(400).json({
+                message: "Somthing went wrong!"
+            })
+        }
+
+        try {
+            let Userinfo = await UserModel.findOne({ _id: request.params.id }).select("-Password -__v");
+            if (!Userinfo) {
+                return response.status(400).json({
+                    message: "User Not Found!"
+                })
+            }
+            response.status(200).json({
+                User: Userinfo
+            })
+        } catch (error) {
+            return response.status(400).json({
+                message: error.message
+            })
+        }
+
+
+    },
+    UpdateUserinfo: async (request, response) => {
+        if (!request.params.id) {
+            return response.status(400).json({
+                message: "Something went wrong!"
+            });
+        }
+        if (request.params.id !== request.User._id) {
+            return response.status(400).json({
+                message: "You can't access the data"
+            });
+        }
+
+        try {
+            if (request.body.Email) {
+                try {
+                    let UserResult = await CreateOTPandToken({ ...request.User, Email: request.body.Email }, process.env.Token_privateKey, "5m");
+                    console.log(UserResult);
+
+                    let MainHTMLTemplate = await ejs.renderFile(__dirname + "/../views/email.ejs", { OTP: UserResult.OTP, Username: request.User.Username });
+                    await SendMail(MainHTMLTemplate, request.body.Email, "Email Update OTP");
+
+                    return response.cookie("Verification_Token", UserResult.Token).status(200).json({
+                        message: "OTP Sent to Your Email!"
+                    });
+
+                } catch (error) {
+                    return response.status(400).json({
+                        message: error.message
+                    });
+                }
+            }
+            if (request.file) {
+                request.body.ProfilePicture = request.file.filename;
+            }
+            let updateresult = await UserModel.findByIdAndUpdate(request.params.id, { $set: { ...request.body } });
+            if (!updateresult) {
+                return response.status(400).json({
+                    message: "User Not Found!"
+                });
+            }
+            return response.status(200).json({
+                message: "Profile Updated Successfully."
+            });
+
+        } catch (error) {
+            return response.status(400).json({
+                message: error.message
+            });
+        }
+    },
+    VerifyEmailOTP: async (request, response) => {
+        let token = request.cookies.Verification_Token;
+        if (!token) {
+            return response.status(400).json({
+                message: "Invalid Token"
+            });
+        }
+
+        try {
+            let decoded = jwt.verify(token, process.env.Token_privateKey);
+            let { OTP, Userdata } = decoded;
+
+            if (OTP != request.body.otp) {
+                return response.status(400).json({
+                    message: "Invalid OTP!"
+                });
+            }
+
+            let UpdateNewEmail = await UserModel.findByIdAndUpdate(
+                { _id: Userdata._id },
+                { $set: { Email: request.body.Email } }
+            );
+
+            if (!UpdateNewEmail) {
+                return response.status(400).json({
+                    message: "User not found or email not updated"
+                });
+            }
+            response.status(200).json({
+                message: "Email updated successfully. Please login again!"
+            });
+        } catch (error) {
+            return response.status(400).json({
+                message: error.message
+            });
+        }
     }
 }
 
 
 module.exports = UserController
+
+

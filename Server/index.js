@@ -6,7 +6,10 @@ const cookieParser = require('cookie-parser')
 let app = express();
 app.set("view engine","ejs");
 app.use(cookieParser());
+app.use(express.static("./UpdateImage"));
+// app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
 
 
 app.use("/api/users", Userroutes);
