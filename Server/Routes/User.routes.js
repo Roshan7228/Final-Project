@@ -13,7 +13,7 @@ Userroutes.post("/verify-reset-otp",UserController.VerifyResetOTP);
 Userroutes.post("/reset-password",UserController.ResetPassword);
 Userroutes.get("/getuserinfo/:id",Auth,UserController.GetUserinfo);
 Userroutes.patch("/Updateinfo/:id",Auth,upload.single('ProfilePictures'),UserController.UpdateUserinfo);
-Userroutes.post("/verifyUpdateEmailOTP",Auth,UserController.VerifyEmailOTP);
+
 
 
 module.exports=Userroutes;

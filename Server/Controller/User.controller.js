@@ -135,7 +135,7 @@ const UserController = {
                 })
             }
 
-            let { OTP, Token } = await CreateOTPandToken(isExist,process.env.Token_privateKey,"5m");
+            let { OTP, Token } = await CreateOTPandToken(isExist, process.env.Token_privateKey, "5m");
             let MainHTMLTemplate = await ejs.renderFile(__dirname + "/../views/ForgetOTP.ejs", { OTP: OTP, Username: isExist.Username });
             await SendMail(MainHTMLTemplate, Email, "OTP Verification");
             return response.cookie("Verification_Token", Token).status(200).json({
@@ -145,7 +145,7 @@ const UserController = {
             console.log(error.message)
             return response.status(400).json({
                 message: error.message,
-                
+
             })
         }
     },
@@ -247,74 +247,20 @@ const UserController = {
         }
 
         try {
-            if (request.body.Email) {
-                try {
-                    let UserResult = await CreateOTPandToken({ ...request.User, Email: request.body.Email }, process.env.Token_privateKey, "5m");
-                    console.log(UserResult);
 
-                    let MainHTMLTemplate = await ejs.renderFile(__dirname + "/../views/email.ejs", { OTP: UserResult.OTP, Username: request.User.Username });
-                    await SendMail(MainHTMLTemplate, request.body.Email, "Email Update OTP");
-
-                    return response.cookie("Verification_Token", UserResult.Token).status(200).json({
-                        message: "OTP Sent to Your Email!"
-                    });
-
-                } catch (error) {
-                    return response.status(400).json({
-                        message: error.message
-                    });
-                }
-            }
             if (request.file) {
-                request.body.ProfilePicture = request.file.filename;
+                request.body.ProfilePicture = request.file.originalname;
             }
             let updateresult = await UserModel.findByIdAndUpdate(request.params.id, { $set: { ...request.body } });
             if (!updateresult) {
                 return response.status(400).json({
-                    message: "User Not Found!"
+                    message: "Error While Updating Profile"
                 });
             }
             return response.status(200).json({
                 message: "Profile Updated Successfully."
             });
 
-        } catch (error) {
-            return response.status(400).json({
-                message: error.message
-            });
-        }
-    },
-    VerifyEmailOTP: async (request, response) => {
-        let token = request.cookies.Verification_Token;
-        if (!token) {
-            return response.status(400).json({
-                message: "Invalid Token"
-            });
-        }
-
-        try {
-            let decoded = jwt.verify(token, process.env.Token_privateKey);
-            let { OTP, Userdata } = decoded;
-
-            if (OTP != request.body.otp) {
-                return response.status(400).json({
-                    message: "Invalid OTP!"
-                });
-            }
-
-            let UpdateNewEmail = await UserModel.findByIdAndUpdate(
-                { _id: Userdata._id },
-                { $set: { Email: request.body.Email } }
-            );
-
-            if (!UpdateNewEmail) {
-                return response.status(400).json({
-                    message: "User not found or email not updated"
-                });
-            }
-            response.status(200).json({
-                message: "Email updated successfully. Please login again!"
-            });
         } catch (error) {
             return response.status(400).json({
                 message: error.message
