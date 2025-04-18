@@ -135,15 +135,17 @@ const UserController = {
                 })
             }
 
-            let { OTP, Token } = await CreateOTPandToken(isExist);
+            let { OTP, Token } = await CreateOTPandToken(isExist,process.env.Token_privateKey,"5m");
             let MainHTMLTemplate = await ejs.renderFile(__dirname + "/../views/ForgetOTP.ejs", { OTP: OTP, Username: isExist.Username });
             await SendMail(MainHTMLTemplate, Email, "OTP Verification");
             return response.cookie("Verification_Token", Token).status(200).json({
                 message: "OTP has been sent to your registered email. Please verify."
             });
         } catch (error) {
+            console.log(error.message)
             return response.status(400).json({
-                message: error.message
+                message: error.message,
+                
             })
         }
     },
