@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser')
 let app = express();
 app.set("view engine","ejs");
 app.use(cookieParser());
-app.use(express.static("./UpdateImage"));
+app.use(express.static("./UploadImage"));
 
 app.use(express.json());
 

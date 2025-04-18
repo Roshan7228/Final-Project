@@ -235,38 +235,83 @@ const UserController = {
 
     },
     UpdateUserinfo: async (request, response) => {
-        if (!request.params.id) {
+        const userId = request.params.id;
+
+        if (!userId) {
             return response.status(400).json({
                 message: "Something went wrong!"
             });
         }
-        if (request.params.id !== request.User._id) {
-            return response.status(400).json({
+
+        if (userId !== request.User._id) {
+            return response.status(403).json({
                 message: "You can't access the data"
             });
         }
 
         try {
+            if (!request.file) {
+                const updateresult = await UserModel.findByIdAndUpdate(
+                    userId,
+                    { $set: { ...request.body } },
+                );
+                if (!updateresult) {
+                    return response.status(400).json({
+                        message: "Error While updateing Profile!"
+                    })
+                }
+            }
 
             if (request.file) {
-                request.body.ProfilePicture = request.file.originalname;
+                const updateresult = await UserModel.findByIdAndUpdate(
+                    userId,
+                    { $set: { ...request.body, ProfilePicture: request.file.originalname } },
+                );
+                if (!updateresult) {
+                    return response.status(400).json({
+                        message: "Error While updateing Profile!"
+                    })
+                }
+                return response.status(200).json({
+                    message:"Profile Update Successfully."
+                })
             }
-            let updateresult = await UserModel.findByIdAndUpdate(request.params.id, { $set: { ...request.body } });
-            if (!updateresult) {
-                return response.status(400).json({
-                    message: "Error While Updating Profile"
-                });
-            }
+
+
+
+
+
+
+            // if (request.file) {
+            //     request.body.ProfilePicture = request.file.originalname;
+            // } else {
+            //     return response.status(400).json({
+            //         message: "Error While Updating Profile, File not found!"
+            //     });
+            // }
+
+            // const updateresult = await UserModel.findByIdAndUpdate(
+            //     userId,
+            //     { $set: { ...request.body } },
+            // );
+
+            // if (!updateresult) {
+            //     return response.status(404).json({
+            //         message: "User not found or Error While Updating Profile"
+            //     });
+            // }
+
             return response.status(200).json({
                 message: "Profile Updated Successfully."
             });
 
         } catch (error) {
-            return response.status(400).json({
+            return response.status(500).json({
                 message: error.message
             });
         }
     }
+
 }
 
 
