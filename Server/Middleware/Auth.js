@@ -1,6 +1,5 @@
 let jwt = require('jsonwebtoken');
 
-
 function Auth(request, response, next) {
     try {
         let token = request.cookies.Access_Token

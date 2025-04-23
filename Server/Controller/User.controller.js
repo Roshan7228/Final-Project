@@ -273,7 +273,7 @@ const UserController = {
                     })
                 }
                 return response.status(200).json({
-                    message:"Profile Update Successfully."
+                    message: "Profile Update Successfully."
                 })
             }
 
@@ -310,6 +310,32 @@ const UserController = {
                 message: error.message
             });
         }
+    },
+    DeletebyAdmin: async (request, response) => {
+        let { id } = request.params;
+        if (!id) {
+            return response.status(400).json({
+                message: "Something Went Wrong"
+            });
+        }
+
+        try {
+            let deleteUser = await UserModel.findByIdAndDelete(id);
+            if (!deleteUser) {
+                return response.status(400).json({
+                    message: "User Not Found"
+                })
+            }
+
+            return response.status(400).json({
+                message: "User Delete Successfully"
+            })
+        } catch (error) {
+            return response.status(400).json({
+                message: error.message
+            })
+        }
+
     }
 
 }

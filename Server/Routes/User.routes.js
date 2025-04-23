@@ -2,6 +2,7 @@ let express=require("express");
 const UserController = require("../Controller/User.controller");
 const Auth = require("../Middleware/Auth");
 const upload = require("../Config/Multer.config");
+const isAdmin = require("../Middleware/Admin");
 
 let Userroutes=express.Router();
 
@@ -13,7 +14,6 @@ Userroutes.post("/verify-reset-otp",UserController.VerifyResetOTP);
 Userroutes.post("/reset-password",UserController.ResetPassword);
 Userroutes.get("/getuserinfo/:id",Auth,UserController.GetUserinfo);
 Userroutes.patch("/Updateinfo/:id",Auth,upload.single('ProfilePictures'),UserController.UpdateUserinfo);
-
-
+Userroutes.delete("/delete/:id",Auth,isAdmin,UserController.DeletebyAdmin);
 
 module.exports=Userroutes;
