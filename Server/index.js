@@ -2,7 +2,8 @@ let express = require('express');
 const Connection = require('./Config/db');
 const Userroutes = require('./Routes/User.routes');
 require("dotenv").config();
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
+const Postroutes = require('./Routes/Post.routes');
 let app = express();
 app.set("view engine","ejs");
 app.use(cookieParser());
@@ -13,7 +14,7 @@ app.use(express.json());
 
 
 app.use("/api/users", Userroutes);
-
+app.use("/api/post",Postroutes);
 
 app.listen(process.env.PORT || 8000, async () => {
     try {

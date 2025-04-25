@@ -13,7 +13,9 @@ Userroutes.post("/forget-password",UserController.ForgetPasswordEmailVerify);
 Userroutes.post("/verify-reset-otp",UserController.VerifyResetOTP);
 Userroutes.post("/reset-password",UserController.ResetPassword);
 Userroutes.get("/getuserinfo/:id",Auth,UserController.GetUserinfo);
+Userroutes.get("/alluser",Auth,isAdmin,UserController.GetAllUserinfo);
 Userroutes.patch("/Updateinfo/:id",Auth,upload.single('ProfilePictures'),UserController.UpdateUserinfo);
 Userroutes.delete("/delete/:id",Auth,isAdmin,UserController.DeletebyAdmin);
+Userroutes.get("/logout",UserController.Logout);
 
 module.exports=Userroutes;

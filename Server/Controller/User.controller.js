@@ -336,6 +336,30 @@ const UserController = {
             })
         }
 
+    },
+    GetAllUserinfo:async (request,response)=>{
+        try {
+            let AllUser=await UserModel.find();
+            if(!AllUser){
+                return response.status(400).json({
+                    message:"User Not Found"
+                })
+            }
+            return response.status(200).json({
+                message:"Get All Users",
+                User:AllUser
+            })
+            
+        } catch (error) {
+             return response.status(400).json({
+                message:error.message
+             })
+        }
+    },
+    Logout:async(request,response)=>{
+        return response.clearCookie("Access_Token").status(200).json({
+            message:"Logged out successfully"
+        })
     }
 
 }
