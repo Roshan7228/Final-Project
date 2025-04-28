@@ -4,6 +4,7 @@ const PostModel = require("../Model/Post.model");
 
 
 const PostController = {
+
     Createpost: async (request, response) => {
         let { Title, Content } = request.body;
         if (!(Title, Content)) {
@@ -125,18 +126,17 @@ const PostController = {
         }
     },
     GetAllPost: async (request, response) => {
-        let { limit, oder } = request.query;
+        let limit = request.query.limit || null;
+        let order = request.query.order || "ace";
+        let search = request.query.search || "";
+        let page = request.query.page || null;
+
         try {
-            let allpost;
-            if (limit) {
-                allpost = await PostModel.find().limit(limit).sort({ createdAt: oder == "desc" ? -1 : 1 });
-            } else {
-                allpost = await PostModel.find();
-                if (!allpost) {
-                    return response.status(400).json({
-                        message: "Post Not Found"
-                    });
-                }
+            let allpost = await PostModel.find({ $or: [{ Title: { $regex: search, $options: "i" } }, { Content: { $regex: search, $options: "i" } }] }).limit(limit).sort({ createdAt: order == "desc" ? -1 : 1 }).skip(page);
+            if (!allpost || allpost.length == 0) {
+                return response.status(400).json({
+                    message: "Post Not Found"
+                });
             }
             return response.status(200).json({
                 message: "All Post",
@@ -150,7 +150,10 @@ const PostController = {
     },
     GetAllPostbyUser: async (request, response) => {
         let { userid } = request.params;
-        let {limit,oder}=request.query;
+        let limit = request.query.limit || null;
+        let order = request.query.order || "ace";
+        let search = request.query.search || "";
+        let page = request.query.page || null;
         if (!userid) {
             return response.status(400).json({
                 message: "Not Authorized"
@@ -162,21 +165,15 @@ const PostController = {
             })
         }
         try {
-            let postbyUser
-            if(limit){
-             postbyUser = await PostModel.find({ UserId: userid }).limit(limit).sort({createdAt:oder=="desc"?-1:1});
-            }
-            else{
-                postbyUser = await PostModel.find({ UserId: userid }); 
-                if (!postbyUser) {
-                    return response.status(400).json({
-                        message: "Post Not Found"
-                    })
-                }
+            let postbyUser = await PostModel.find({$or:[{Title:{$regex:search,$options:"i"}},{Content:{$regex:search,$options:"i"}}]}).limit(limit).sort({ createdAt: order == "desc" ? -1 : 1 }).skip(page);
+            if (!postbyUser || postbyUser.length==0) {
+                return response.status(400).json({
+                    message: "Post Not Found"
+                })
             }
             return response.status(200).json({
-                message:"All Posts by this User",
-                post:postbyUser
+                message: "All Posts by this User",
+                post: postbyUser
             })
         } catch (error) {
             return response.status(400).json({

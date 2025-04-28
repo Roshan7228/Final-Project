@@ -261,7 +261,6 @@ const UserController = {
                     })
                 }
             }
-
             if (request.file) {
                 const updateresult = await UserModel.findByIdAndUpdate(
                     userId,
@@ -276,12 +275,6 @@ const UserController = {
                     message: "Profile Update Successfully."
                 })
             }
-
-
-
-
-
-
             // if (request.file) {
             //     request.body.ProfilePicture = request.file.originalname;
             // } else {
@@ -338,8 +331,11 @@ const UserController = {
 
     },
     GetAllUserinfo:async (request,response)=>{
+        let limit=request.query.limit||null;
+        let search=request.query.search||"";
+        let order=request.query.order||"asc";
         try {
-            let AllUser=await UserModel.find();
+            let AllUser=await UserModel.find({$or:[{Username:{$regex:search,options:"i"}},{Role:{$regex:search,options:"i"}}]}).limit(limit).sort({createdAt:order=="desc"?-1:1});
             if(!AllUser){
                 return response.status(400).json({
                     message:"User Not Found"
