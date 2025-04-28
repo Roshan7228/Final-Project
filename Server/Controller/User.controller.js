@@ -335,7 +335,7 @@ const UserController = {
         let search=request.query.search||"";
         let order=request.query.order||"asc";
         try {
-            let AllUser=await UserModel.find({$or:[{Username:{$regex:search,options:"i"}},{Role:{$regex:search,options:"i"}}]}).limit(limit).sort({createdAt:order=="desc"?-1:1});
+            let AllUser=await UserModel.find({$or:[{Username:{$regex:search,options:"i"}},{role:{$regex:search,options:"i"}}]}).limit(limit).sort({createdAt:order=="desc"?-1:1});
             if(!AllUser){
                 return response.status(400).json({
                     message:"User Not Found"
