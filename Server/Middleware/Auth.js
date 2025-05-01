@@ -16,7 +16,7 @@ function Auth(request, response, next) {
         }
 
         request.User = decoded.Userdata;
-        next();
+         next();
     } catch (error) {
         return response.status(400).json({
             message: error.message

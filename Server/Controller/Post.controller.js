@@ -1,4 +1,4 @@
-const { request } = require("express");
+const { request, response } = require("express");
 const PostModel = require("../Model/Post.model");
 
 
@@ -165,8 +165,8 @@ const PostController = {
             })
         }
         try {
-            let postbyUser = await PostModel.find({$or:[{Title:{$regex:search,$options:"i"}},{Content:{$regex:search,$options:"i"}}]}).limit(limit).sort({ createdAt: order == "desc" ? -1 : 1 }).skip(page);
-            if (!postbyUser || postbyUser.length==0) {
+            let postbyUser = await PostModel.find({ $or: [{ Title: { $regex: search, $options: "i" } }, { Content: { $regex: search, $options: "i" } }] }).limit(limit).sort({ createdAt: order == "desc" ? -1 : 1 }).skip(page);
+            if (!postbyUser || postbyUser.length == 0) {
                 return response.status(400).json({
                     message: "Post Not Found"
                 })
@@ -175,6 +175,76 @@ const PostController = {
                 message: "All Posts by this User",
                 post: postbyUser
             })
+        } catch (error) {
+            return response.status(400).json({
+                message: error.message
+            })
+        }
+    },
+    getpostlike: async (request, response) => {
+        let { userid, Postid } = request.params;
+        if (request.User._id !== userid) {
+            return response.status(403).json({
+                message: 'You are not authorized to perform this action'
+            });
+        }
+        let posts = await PostModel.findById(Postid);
+        if (!posts) {
+            return response.status(400).json({
+                message: "Post Not Found"
+            })
+        }
+        try {
+            let index = posts.PostLikeDetails.indexOf(userid);
+            if (index === -1) {
+                posts.PostLikeDetails.push(userid);
+                posts.PostLike += 1;
+            } else {
+                posts.PostLike -= 1;
+                posts.PostLikeDetails.splice(index, 1);
+            }
+            await posts.save();
+            return response.status(200).json({
+                message: index === -1 ? "Post liked successfully" : "Post unliked successfully",
+                totalLikes: posts.PostLike,
+                likedBy: posts.PostLikeDetails
+            });
+
+        } catch (error) {
+            return response.status(400).json({
+                message: error.message
+            })
+        }
+    },
+    getalllikepost: async (request, response) => {
+        let { Postid } = request.params;
+        let post = await PostModel.findById(Postid);
+        if (!post) {
+            return response.status(400).json({
+                message: "Post Not Found"
+            })
+        }
+        return response.status(200).json({
+            message: "All Like",
+            TotalLike: post.PostLike
+        })
+    },
+    getalllikebyadmin: async (request, response) => {
+        let { userid } = request.params;
+        if (request.User._id !== userid) {
+            return response.status(404).json({
+                message: "You are not authorized to perform this action"
+            })
+        }
+        try {
+            let allpost = await PostModel.find();
+            const totalLikes = allpost.reduce((sum, post) => sum + post.PostLike, 0);
+
+            return response.status(200).json({
+                message: "Total likes across all posts",
+                totalLikes
+            });
+
         } catch (error) {
             return response.status(400).json({
                 message: error.message

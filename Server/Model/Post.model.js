@@ -20,6 +20,14 @@ let PostSchema=new mongoose.Schema({
     Category:{
         type:String,
         default:"uncategorized"
+    },
+    PostLikeDetails:{
+        type:Array,
+        default:[]
+    },
+    PostLike:{
+        type:Number,
+        default:0
     }
 },{
     timestamps:true

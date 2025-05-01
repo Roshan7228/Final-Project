@@ -1,4 +1,6 @@
 const CommentModel = require("../Model/Comment.model");
+const PostModel = require("../Model/Post.model");
+
 
 let Commentcontroller = {
     create: async (request, response) => {
@@ -13,7 +15,7 @@ let Commentcontroller = {
         } catch (error) {
             return response.status(400).json({
                 message: error.message
-            })
+            }) 
         }
     },
     deletecomment: async (request, response) => {
@@ -64,7 +66,90 @@ let Commentcontroller = {
                 message:error.message
              })
         }
+    },
+    getPostallcomment:async(request,response)=>{
+        let {Postid}=request.params;
+        let limit = request.query.limit || null;
+        let order = request.query.order || "ace";
+        let comment=await CommentModel.find({Postid}).limit(limit).sort({createdAt:order=="desc"?-1:1});
+         if(!comment && comment.lenght===0){
+            return response.status(400).json({
+                message:"Comment Not Found"
+            })
+         }
+         try {
+            return response.status(200).json({
+                message:"All Comment on this Post",
+                comment
+            })
+            
+         } catch (error) {
+            return response.status(400).json({
+                message:error.message
+            }) 
+         } 
+    },
+    getALlbyadmincomment: async (request, response) => {
+        const { userid } = request.params;
+        if (request.User._id !== userid) {
+            return response.status(403).json({
+                message: "You are not authorized to access all comments"
+            });
+        }
+        try {
+            const allcomment = await CommentModel.find();
+            if (!allcomment || allcomment.length === 0) {
+                return response.status(404).json({
+                    message: "Comment not found"
+                });
+            }
+            const totalComment = allcomment.length;
+            return response.status(200).json({
+                message: "All post comments",
+                countdown: totalComment,
+                allcomment
+            });
+        } catch (error) {
+            return response.status(500).json({
+                message: error.message
+            });
+        }
+    },
+    commentLikeAction:async(request,response)=>{
+        const { userid} = request.params;
+        if (request.User._id !== userid) {
+            return response.status(403).json({
+                message: 'You are not authorized to perform this action'
+            });
+        }
+            const comment = await CommentModel.findById(request.params.commentid);
+            if(!comment || comment.length==0){
+                return response.status(400).json({
+                    message:"Post Not Found"
+                })
+            }
+            try {
+                let index=comment.CommentLikeDetails.indexOf(userid);
+                 if(index===-1){
+                    comment.CommentLikeDetails.push(userid);
+                    comment.like+=1;
+                 }else{
+                    comment.like-=1;
+                    comment.CommentLikeDetails.splice(index,1);
+                 }
+         await comment.save();
+         return response.status(200).json({
+            message: index === -1 ? "Comment liked" : "Comment unliked",
+            totalLikes: comment.like,
+            CommentLikeDetails: comment.CommentLikeDetails
+         })
+            } catch (error) {
+                 return response.status(400).json({
+                    message:error.message
+                 })
+            }
     }
+    
 }
 
 module.exports = Commentcontroller;

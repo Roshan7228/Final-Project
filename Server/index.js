@@ -11,9 +11,6 @@ app.use(cookieParser());
 app.use(express.static("./UploadImage"));
 
 app.use(express.json());
-
-
-
 app.use("/api/users", Userroutes);
 app.use("/api/post",Postroutes);
 app.use("/api/comment",Commentroutes);
